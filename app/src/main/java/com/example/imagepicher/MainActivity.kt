@@ -56,7 +56,6 @@ class MainActivity : AppCompatActivity() {
         // private val CAMERA_REQUEST = 123
     }
 
-    private var mUri: Uri? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,7 +108,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    fun capturePhoto(){
+    private fun capturePhoto(){
 
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
@@ -117,7 +116,7 @@ class MainActivity : AppCompatActivity() {
 
         val fileProvider = FileProvider.getUriForFile(
             this@MainActivity,
-            "com.lctapp.lct.fileprovider",
+            "com.example.imagepicher.fileprovider",
             photoFile
         )
         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider)
@@ -254,6 +253,7 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    @RequiresApi(Build.VERSION_CODES.Q)
     fun imageRotation(bitmap: Bitmap): Bitmap? {
         val ei = ExifInterface(photoFile)
         val orientation = ei.getAttributeInt(
@@ -272,7 +272,7 @@ class MainActivity : AppCompatActivity() {
         return rotatedBitmap
     }
 
-    fun rotateImage(source: Bitmap, angle: Float): Bitmap? {
+    private fun rotateImage(source: Bitmap, angle: Float): Bitmap? {
         val matrix = Matrix()
         matrix.postRotate(angle)
         return Bitmap.createBitmap(
