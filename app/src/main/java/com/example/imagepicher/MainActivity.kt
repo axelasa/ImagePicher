@@ -8,9 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
-import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
@@ -19,9 +17,13 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.imageview.ShapeableImageView
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
 import org.json.JSONObject
 import timber.log.Timber
 import java.io.ByteArrayOutputStream
@@ -44,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
     private val REQUEST_CODE = 42
 
-    private var cPhoto: Bitmap? = null
+    private lateinit var cPhoto: Bitmap
 
     var cPhotoRotated: Bitmap?=null
 
@@ -55,6 +57,10 @@ class MainActivity : AppCompatActivity() {
 
         // private val CAMERA_REQUEST = 123
     }
+    //face detection using Ml kit here
+
+    //var detector: FirebaseVisionFaceDetector? = null
+
 
 
 
@@ -108,8 +114,14 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun capturePhoto(){
+    // Real-time contour detection
+//    val realTimeOpts = FaceDetectorOptions.Builder()
+//        .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+//        .build()
 
+
+
+    private fun capturePhoto(){
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
 
         photoFile = photoFile(FILE_NAME)
@@ -192,6 +204,7 @@ class MainActivity : AppCompatActivity() {
             Timber.e("CHECk")
 
             if (cPhoto!=null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                 cPhotoRotated = imageRotation(cPhoto!!)
                 selfi.setImageBitmap(cPhotoRotated) // here too : so this is for the camera
 
@@ -205,12 +218,36 @@ class MainActivity : AppCompatActivity() {
 
             }
 
+            // High-accuracy landmark detection and face classification
+            FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                //.setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build()
+
+            val image = InputImage.fromBitmap(cPhoto,0)
+
+            val detector = FaceDetection.getClient()
+            detector.process(image)
+                .addOnSuccessListener { faces->
+                    Toast.makeText(this, "successful", Toast.LENGTH_LONG).show()
+                }
+                .addOnFailureListener { e->
+                    Toast.makeText(this, "PLEASE TRY AGAIN!", Toast.LENGTH_LONG).show()
+                }
+
+// Or, to use the default option:
+// val detector = FaceDetection.getClient();
+
 
             // set photo to imageView
 
         } else{
             super.onActivityResult(requestCode, resultCode, data)
         }
+
+
     }
     // encoding image to base 64
     @RequiresApi(Build.VERSION_CODES.O)
@@ -280,5 +317,7 @@ class MainActivity : AppCompatActivity() {
             matrix, true
         )
     }
+
+
 
 }
